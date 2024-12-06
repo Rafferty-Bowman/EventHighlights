@@ -94,7 +94,7 @@ const App = () => {
   return (
     <div className="container">
       {loading && <Loading />}
-      <h2>📸 Image Gallery Azure Blob Storage 📸</h2><hr />
+      <h2>📸 Event Highlight Media Service 📸</h2><hr />
       <div className="row-form">
         <form className='upload-form'>
           <div className='upload-form_display'>
