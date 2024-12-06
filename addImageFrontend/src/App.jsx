@@ -20,19 +20,24 @@ const App = () => {
   const containerClient = blobServiceClient.getContainerClient(containerName);  // create a containerClient
 
   // Set up Application Insights
-  const appInsights = new ApplicationInsights({
-    config: {
-      instrumentationKey: import.meta.env.INSTRUMENTATION_KEY, // Replace with your Instrumentation Key
-    },
-  });
-
   useEffect(() => {
-    // Initialize Application Insights
+    const instrumentationKey = import.meta.env.VITE_APPINSIGHTS_INSTRUMENTATION_KEY;  // get the instrumentation key from the .env file
+    const appInsights = new ApplicationInsights({
+      config: {
+        instrumentationKey: instrumentationKey, // Replace with your Instrumentation Key
+      },
+    });
+
     appInsights.loadAppInsights();
 
-    // Track page view (optional)
+    // Track page view (just to verify if it works)
     appInsights.trackPageView();
-  }, [appInsights]);
+
+    // Cleanup function to unload Application Insights when the component is unmounted
+    return () => {
+      appInsights.unload();
+    };
+  }, []);
 
   //fetch all images
   const fetchImages = async () => {
