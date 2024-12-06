@@ -3,7 +3,7 @@ import './App.css'
 import { AiFillDelete } from 'react-icons/ai';  // import the delete icon
 import { FaFileUpload } from 'react-icons/fa';  // import the delete icon
 import Placeholder from './assets/placeholder.jpeg'  // import the placeholder image
-import Loading from './components/Loading';  // import the loading component
+import Loading from './components/Loading.jsx';  // import the loading component
 import { BlobServiceClient } from '@azure/storage-blob';
 
 const App = () => {
