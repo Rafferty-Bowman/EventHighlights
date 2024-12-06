@@ -5,6 +5,7 @@ import { FaFileUpload } from 'react-icons/fa';  // import the delete icon
 import Placeholder from './assets/placeholder.jpeg'  // import the placeholder image
 import Loading from './components/Loading.jsx';  // import the loading component
 import { BlobServiceClient } from '@azure/storage-blob';
+import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 
 const App = () => {
   const [file, setFile] = useState(null);
@@ -17,6 +18,21 @@ const App = () => {
   const containerName = import.meta.env.VITE_STORAGE_CONTAINER  // get the container name from the .env file
   const blobServiceClient = new BlobServiceClient(`https://${account}.blob.core.windows.net/?${sasToken}`);  // create a blobServiceClient
   const containerClient = blobServiceClient.getContainerClient(containerName);  // create a containerClient
+
+  // Set up Application Insights
+  const appInsights = new ApplicationInsights({
+    config: {
+      instrumentationKey: import.meta.env.INSTRUMENTATION_KEY, // Replace with your Instrumentation Key
+    },
+  });
+
+  useEffect(() => {
+    // Initialize Application Insights
+    appInsights.loadAppInsights();
+
+    // Track page view (optional)
+    appInsights.trackPageView();
+  }, [appInsights]);
 
   //fetch all images
   const fetchImages = async () => {
