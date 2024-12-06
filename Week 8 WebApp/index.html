@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en" ng-app="Dashboard">
+  <head>
+    <meta charset="UTF-8">
+
+    <title>Event Track</title>
+
+      <link rel="stylesheet" type="text/css" href="CSS/bootstrap.min.css">
+      <script type="text/javascript" src="JS/bootstrap.js"></script>
+      <script type="text/javascript" src="JS/bootstrap.bundle.min.js"></script>
+      <script type="text/javascript" src="JS/jquery-3.6.0.min.js"></script>
+
+      <script type="text/javascript" src="JS/app.js"></script>
+
+  </head>
+  
+  <body>
+
+    <div  class="container">
+
+        <!--Header-->
+        <div class="row align-items-start">
+            <div class="col-2"  ></div>
+
+            <div class="col-8" style="text-align: center;">
+              <h3>Event Tracker</h3>
+            </div>
+
+            <div class="col-2"  ></div>
+        </div>
+
+        <!--New Event Box-->
+        <div class="row align-items-start">
+            <div class="col-2"  ></div>
+
+            <div class="col-8" style="text-align: left;border-bottom:1px solid #222222;">
+              <p>Add Event</p>
+
+              <form style="font-size: 10pt;" id="newEventForm">
+                <div class="mb-3">
+                  <label for="EventName" class="form-label">Event Name</label>
+                  <input type="text" class="form-control" id="EventName">
+                </div>
+
+                <div class="mb-3">
+                  <label for="EventType" class="form-label">Event Type</label>
+                  <input type="text" class="form-control" id="EventType">
+                </div>
+
+                <div class="mb-3">
+                  <label for="DateOfEvent" class="form-label">Data of Event</label>
+                  <input type="text" class="form-control" id="DateOfEvent">
+                </div>
+
+                <div class="mb-3">
+                  <label for="Location" class="form-label">Location</label>
+                  <input type="text" class="form-control" id="Location">
+                </div>
+
+                <div class="mb-3">
+                  <label for="UploadedBy" class="form-label">Uploaded By</label>
+                  <input type="text" class="form-control" id="UploadedBy">
+                </div>
+            
+                <button type="button" id="subNewForm" class="btn btn-primary">Submit</button> <br/><br/>
+                
+              </form>
+            </div>
+
+            <div class="col-2"  ></div>
+        </div>
+
+        <!-- view Event Area-->
+        <div class="row align-items-start">
+            <div class="col-2"  ></div>
+
+            <div class="col-8" style="text-align: left;" >
+              <div style="padding:5px;">
+                <button  id = "retEvents" type="button" class="btn btn-primary">View Event</button>
+              </div>
+
+              <div id="EventList">
+
+                <h4>Please click the view Event button if you wish to view events on the system.</h4>
+
+              </div>
+            </div>
+
+            <div class="col-2"  ></div>
+        </div>
+
+    </div>
+  
+  </body>
+</html>
