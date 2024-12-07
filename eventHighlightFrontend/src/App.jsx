@@ -103,7 +103,7 @@ const App = () => {
       setLoading(true);  // Turn on loading
       const blobClient = containerClient.getBlockBlobClient(blobName); // get the blob client
       await blobClient.delete(); // delete the blob
-      fetchImages(); // fetch all images again after the delete is completed
+      await fetchImages(); // fetch all images again after the delete is completed
     } catch (error) {
       console.log(error) // Handle error
     } finally {
