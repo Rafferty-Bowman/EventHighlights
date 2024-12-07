@@ -11,6 +11,15 @@ const App = () => {
   const [file, setFile] = useState(null);
   const [imageUrls, setImageUrls] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [events, setEvents] = useState([]);
+  const [eventForm, setEventForm] = useState({
+    eventName: '',
+    eventType: '',
+    dateOfEvent: '',
+    location: '',
+    uploadedBy: ''
+  });
+  const [editingEventId, setEditingEventId] = useState(null);
 
   //Storage account credentials
   const account = import.meta.env.VITE_STORAGE_ACCOUNT  // get the storage account name from the .env file
@@ -102,9 +111,89 @@ const App = () => {
     }
   };
 
+  const fetchEvents = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('https://prod-20.uksouth.logic.azure.com/workflows/d3e3abbbb71f4e41a20046ff165342dc/triggers/When_a_HTTP_request_is_received/paths/invoke/rest/v1/events?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=vU0y6_JSoc0_otYkC8oX1NJpjiBKgajtySp6uQ7FSSs');
+      const data = await response.json();
+      setEvents(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEventSubmit = async () => {
+    const url = editingEventId
+        ? `https://prod-25.uksouth.logic.azure.com/workflows/6bbe880f21ae4503ba75e6a01c2b64a3/triggers/When_a_HTTP_request_is_received/paths/invoke/rest/v1/events/${editingEventId}?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=6o7dFpnQjTJE1Zfr7MzXp0LmUPKUGUZWArSKlz_gJRM`
+        : 'https://prod-20.uksouth.logic.azure.com/workflows/a14bdd1adb754ebbad08096fc68821e4/triggers/When_a_HTTP_request_is_received/paths/invoke/rest/v1/events?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=bD1c_q9tT_PwTONySMHvxFd6hWiXr6u2MBYxnZ-F-bA';
+
+    const method = editingEventId ? 'PUT' : 'POST';
+
+    setLoading(true);
+    try {
+      await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(eventForm)
+      });
+      await fetchEvents();
+      setEventForm({
+        eventName: '',
+        eventType: '',
+        dateOfEvent: '',
+        location: '',
+        uploadedBy: ''
+      });
+      setEditingEventId(null);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEventEdit = async (id) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`https://prod-30.uksouth.logic.azure.com/workflows/f7fa00604316413b98b6184c8abb5f6c/triggers/When_a_HTTP_request_is_received/paths/invoke/rest/v1/events/${id}?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=HqlysZZ_VccWSKZ7NputVl64f2XhaN9S-UTMoDzeHnE`);
+      const data = await response.json();
+      setEventForm({
+        eventName: data.eventName,
+        eventType: data.eventType,
+        dateOfEvent: data.dateOfEvent,
+        location: data.location,
+        uploadedBy: data.uploadedBy
+      });
+      setEditingEventId(id);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEventDelete = async (id) => {
+    setLoading(true);
+    try {
+      await fetch(`https://prod-28.uksouth.logic.azure.com/workflows/b2fdc108ceb7490a916aeeaf3ad3a4ef/triggers/When_a_HTTP_request_is_received/paths/invoke/rest/v1/events/${id}?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=4Vyh_iLk4e_gZ4BB5IaY_ChgEDQKok4z_X84AuDTekg`, {
+        method: 'DELETE'
+      });
+      await fetchEvents();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // fetch all images when the page loads
   useEffect(() => {
     fetchImages();
+    fetchEvents();
   }, [])
 
   // Helper function to get the image name without extension
@@ -112,6 +201,7 @@ const App = () => {
     const dotIndex = filename.lastIndexOf('.');
     return dotIndex !== -1 ? filename.slice(0, dotIndex) : filename;
   };
+
   return (
     <div className="container">
       {loading && <Loading />}
@@ -142,6 +232,34 @@ const App = () => {
               </div>
             )
           })
+        )}
+      </div>
+      <h2>Event Tracker</h2>
+      <div className="row-form">
+        <form className='event-form'>
+          <div className='event-form_inputs'>
+            <input type="text" placeholder="Event Name" value={eventForm.eventName} onChange={(e) => setEventForm({ ...eventForm, eventName: e.target.value })} />
+            <input type="text" placeholder="Event Type" value={eventForm.eventType} onChange={(e) => setEventForm({ ...eventForm, eventType: e.target.value })} />
+            <input type="text" placeholder="Date of Event" value={eventForm.dateOfEvent} onChange={(e) => setEventForm({ ...eventForm, dateOfEvent: e.target.value })} />
+            <input type="text" placeholder="Location" value={eventForm.location} onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })} />
+            <input type="text" placeholder="Uploaded By" value={eventForm.uploadedBy} onChange={(e) => setEventForm({ ...eventForm, uploadedBy: e.target.value })} />
+            <button type="button" onClick={handleEventSubmit}>{editingEventId ? 'Update Event' : 'Add Event'}</button>
+          </div>
+        </form>
+      </div>
+      <div className="row-display">
+        {events.length === 0 ? <h3>😐 No Events Found😐 </h3> : (
+            events.map((event, index) => (
+                <div key={index} className="card">
+                  <h3>{event.eventName}</h3>
+                  <p>{event.eventType}</p>
+                  <p>{event.dateOfEvent}</p>
+                  <p>{event.location}</p>
+                  <p>{event.uploadedBy}</p>
+                  <button className="edit" onClick={() => handleEventEdit(event.eventID)}>Edit</button>
+                  <button className="del" onClick={() => handleEventDelete(event.eventID)}>Delete</button>
+                </div>
+            ))
         )}
       </div>
     </div>
