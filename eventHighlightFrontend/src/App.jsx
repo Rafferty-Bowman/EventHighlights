@@ -62,7 +62,8 @@ const App = () => {
           name: item.fileName,
           url: url,
           id: item.id,
-          filePath: item.filePath
+          filePath: item.filePath,
+          userName: item.userName
         };
       });
       setImageUrls(urls);
@@ -262,6 +263,7 @@ const App = () => {
               <div key={index} className="card">
                 <img src={blobItem.url} alt="no pic" />
                 <h3 style={{ width: "90%" }}>{getImageNameWithoutExtension(blobItem.name)}</h3>
+                <h3 style={{ width: "90%" }}>Uploaded by: {blobItem.userName}</h3>
                 <button className="del" onClick={() => handleDelete(blobItem)} > <AiFillDelete /> </button>
               </div>
             )
