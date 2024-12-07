@@ -11,6 +11,8 @@ const App = () => {
   const [file, setFile] = useState(null);
   const [imageUrls, setImageUrls] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [userID, setUserId] = useState('');
+  const [userName, setUserName] = useState('')
   const [events, setEvents] = useState([]);
   const [eventForm, setEventForm] = useState({
     eventName: '',
@@ -50,23 +52,24 @@ const App = () => {
 
   //fetch all images
   const fetchImages = async () => {
-    if (!account || !sasToken || !containerName) {  // check if the credentials are set
-      alert('Please make sure you have set the Azure Storage credentials in the .env file');
-      return;
-    }
     try {
-      setLoading(true); // Turn on loading
-      const blobItems = containerClient.listBlobsFlat();  // get all blobs in the container     
-      const urls = [];
-      for await (const blob of blobItems) {
-        const tempBlockBlobClient = containerClient.getBlockBlobClient(blob.name);  // get the blob url
-        urls.push({ name: blob.name, url: tempBlockBlobClient.url });  // push the image name and url to the urls array
-      }
-      setImageUrls(urls);  // set the urls array to the imageUrls state
+      setLoading(true);
+      const response = await fetch('https://prod-18.uksouth.logic.azure.com:443/workflows/67a85c32f6bf4778b7b32df72d2019f5/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=SeTaaadVHukIK7ZZPI0LIoc6liq3Usq-_zDZhjENbg0');
+      const metadata = await response.json();
+      const urls = metadata.map(item => {
+        const url = `https://eventhighlightblob.blob.core.windows.net${item.filePath}`;
+        return {
+          name: item.fileName,
+          url: url,
+          id: item.id,
+          filePath: item.filePath
+        };
+      });
+      setImageUrls(urls);
     } catch (error) {
-      console.error(error);  // Handle error
+      console.error('Error fetching images:', error);
     } finally {
-      setLoading(false);  // Turn off loading
+      setLoading(false);
     }
   };
 
@@ -77,37 +80,64 @@ const App = () => {
       alert('Please select an image to upload');
       return;
     }
-    if (!account || !sasToken || !containerName) {  // check if the credentials are set
+    if (!account || !sasToken || !containerName) {
+      alert('Please make sure you have set the Azure Storage credentials in the .env file');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append('FileName', file.name);
+      formData.append('userID', userID); // Replace with actual userID
+      formData.append('userName', userName); // Replace with actual userName
+      formData.append('file', file);
+
+      const response = await fetch('https://prod-31.uksouth.logic.azure.com:443/workflows/dc11d3a941b7474e9a4541919d17506d/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=MtFnwsJWsFcyrIDaF12FOXTEeMhzBih2vQBN5fRQcwE', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        await fetchImages();
+      } else {
+        console.error('Error uploading file:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // delete an Image
+  const handleDelete = async (blobItem) => {
+    if (!account || !sasToken || !containerName) {
       alert('Please make sure you have set the Azure Storage credentials in the .env file');
       return;
     }
     try {
       setLoading(true);
-      const blobName = `${new Date().getTime()}-${file.name}`; // Specify a default blob name if needed
-      const blobClient = containerClient.getBlockBlobClient(blobName);  // get the blob client
-      await blobClient.uploadData(file, { blobHTTPHeaders: { blobContentType: file.type } }); // upload the image
-      await fetchImages();   // fetch all images again after the upload is completed
-    } catch (error) {
-      console.error(error);  // Handle error
-    } finally {
-      setLoading(false); // Turn off loading
-    }
-  };
+      const deleteUrl = 'https://prod-29.uksouth.logic.azure.com:443/workflows/06443720c10743a093dfed6886a1a4bb/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=24f2Iw_PPQEDeDiRWSuQj2Bca6VlirA325dj1O_hBqI';
 
-  // delete an Image
-  const handleDelete = async (blobName) => {
-    if (!account || !sasToken || !containerName) {  // check if the credentials are set
-      alert('Please make sure you have set the Azure Storage credentials in the .env file'); return;
-    }
-    try {
-      setLoading(true);  // Turn on loading
-      const blobClient = containerClient.getBlockBlobClient(blobName); // get the blob client
-      await blobClient.delete(); // delete the blob
-      await fetchImages(); // fetch all images again after the delete is completed
+      const formData = new FormData();
+      formData.append('blobLocator', blobItem.filePath);
+      formData.append('documentID', blobItem.id);
+
+      const response = await fetch(deleteUrl, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        await fetchImages();
+      } else {
+        console.error('Error deleting file:', response.statusText);
+      }
     } catch (error) {
-      console.log(error) // Handle error
+      console.error('Error deleting file:', error.message);
     } finally {
-      setLoading(false);  //
+      setLoading(false);
     }
   };
 
@@ -208,6 +238,10 @@ const App = () => {
       <h2>📸 Event Highlight Media Service 📸</h2><hr />
       <div className="row-form">
         <form className='upload-form'>
+          <div className='upload-form_inputs'>
+            <input type="text" placeholder="User ID" value={userID} onChange={(e) => setUserId(e.target.value)} />
+            <input type="text" placeholder="User Name" value={userName} onChange={(e) => setUserName(e.target.value)} />
+          </div>
           <div className='upload-form_display'>
             {
               file ? <img className="displayImg" src={URL.createObjectURL(file)} alt="no pic" />
@@ -228,7 +262,7 @@ const App = () => {
               <div key={index} className="card">
                 <img src={blobItem.url} alt="no pic" />
                 <h3 style={{ width: "90%" }}>{getImageNameWithoutExtension(blobItem.name)}</h3>
-                <button className="del" onClick={() => handleDelete(blobItem.name)} > <AiFillDelete /> </button>
+                <button className="del" onClick={() => handleDelete(blobItem)} > <AiFillDelete /> </button>
               </div>
             )
           })
